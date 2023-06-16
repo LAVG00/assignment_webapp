@@ -4,7 +4,7 @@ namespace Tx
     public interface IChartJsInterop
     {
         bool IsReady { get; }
-        Task Draw();
+        Task Draw(DateTime? parameter = null);
     }
 
     public class ChartJsInterop : IChartJsInterop
@@ -28,10 +28,15 @@ namespace Tx
         }
 
         public bool IsReady => _jsMod != null;
-        public async Task Draw()
+        public async Task Draw(DateTime? parameter = null)
         {
-            if(!await LoadModules()) { return; }
-            await _jsMod!.InvokeVoidAsync("draw");
+            if (!await LoadModules()) { return; }
+
+            if(parameter != null) {
+                await _jsMod!.InvokeVoidAsync("draw", parameter);
+            } else {
+                await _jsMod!.InvokeVoidAsync("draw");
+            }
         }
     }
 }

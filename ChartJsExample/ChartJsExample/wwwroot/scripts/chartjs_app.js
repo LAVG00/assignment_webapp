@@ -1,43 +1,29 @@
 
-export async function draw(something) {
+export async function draw(param) {
     try {
-        console.log(something)
+        console.log(param)
+
+        if (window.myChart !== undefined) {
+            console.log('destroy', window.myChart)
+            window.myChart.destroy();
+        }
+
         const response = await fetch('../sample-data/reports.json');
         const reports = await response.json();
-
-        // const datesArray = reports.map(report => report.WorkDate.split('T')[0]);
-
-        // const maintenanceTimeArray = reports.map(report => report.WorkTime.Maintenance )
-
-        // console.log(reports) 
-        // console.log(datesArray)
-        // console.log(maintenanceTimeArray)
-
-        // const maintenanceTimePerDay = reports.reduce((result, report) => {
-        //     const date = new Date(report.WorkDate).toLocaleDateString('ja-JP');
-        //     const formattedDate = date.replace(/\//g, '-');
-        //     const maintenanceTime = report.WorkTime.Maintenance;
-
-        //     if (result[formattedDate]) {
-        //         result[formattedDate] += maintenanceTime;
-        //       } else {
-        //         result[formattedDate] = maintenanceTime;
-        //       }
-        //       return result;
-        // }, {});
-
         const mostRecentDay = new Date(Math.max(...reports.map(report => new Date(report.WorkDate))));
         const lastSevenDays = [];
         const maintenanceTimePerDay = {};
 
         //Obtain last 7 days from the most recent date
         for(let i = 6; i >= 0 ; i--){
-            const date = new Date(mostRecentDay);
+            const date = param !== undefined ? new Date(param) : new Date(mostRecentDay);
             date.setDate(date.getDate() - i);
             lastSevenDays.unshift(date.toLocaleDateString('ja-JP').replace(/\//g, '-'));
         }
+
         //initialize maintenanceTimePerDay
         lastSevenDays.forEach(date => { maintenanceTimePerDay[date] = 0});
+
         //Assign maintenance time to date
         reports.forEach(report => {
             const workDate = new Date(report.WorkDate).toLocaleDateString('ja-JP').replace(/\//g, '-');
@@ -47,9 +33,6 @@ export async function draw(something) {
             }
         })
 
-
-        console.log('mostRecentDay',mostRecentDay)
-        console.log(maintenanceTimePerDay);
         const datesArray = Object.keys(maintenanceTimePerDay)
         const maintenanceTimeArray = Object.values(maintenanceTimePerDay)
 
