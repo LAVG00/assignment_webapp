@@ -1,0 +1,32 @@
+﻿@inject IDataGateway dataGateway
+@inject IChartJsInterop chartJsInterop
+
+<div class="container">
+    @* Example of chart drawing *@
+    <div class="row">
+        <h4>Test chart:</h4>
+        <div style="width:75%;">
+            <canvas id="chartCanvas"></canvas>
+        </div>
+    </div>
+
+    @* Example of test data (as json) *@
+    <div class="row">
+        <h4>Test data:</h4>
+        <span>@TestDataJson</span>
+    </div>
+</div>
+@code
+{
+    string TestDataJson = string.Empty;
+    Report[] reports = Array.Empty<Report>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        reports = await dataGateway.LoadReports();
+        TestDataJson = System.Text.RegularExpressions.Regex.Unescape(System.Text.Json.JsonSerializer.Serialize(reports));
+
+        await chartJsInterop.Draw();
+        await InvokeAsync(StateHasChanged);
+    }
+}
