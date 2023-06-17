@@ -4,3 +4,8 @@ export interface IDurationsByJobTaskId {
     };
   }
   
+  export interface ITaskType {
+    [Id: string]: { 
+        [TaskName: string]: string 
+    };
+  }
