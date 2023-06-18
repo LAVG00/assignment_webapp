@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import './App.css';
 import { Chart ,ChartConfiguration, ChartDataset, LineController, LineElement  } from "chart.js/auto"
 import tasksData from './json_data/tasks.json';
@@ -10,7 +10,9 @@ import ChartDataLabels,  {Context} from 'chartjs-plugin-datalabels';
 function App() {
   const chartRef = React.useRef<HTMLCanvasElement | null>(null);
   const chartInstanceRef = React.useRef<Chart | null>(null);
-  const [displayDatasets, setdisplayDatasets] = useState(true)
+  const [displayDatasets, setdisplayDatasets] = React.useState(true)
+  const [legendItems, setLegendItems] = React.useState<any[]>([]);
+  const [dropdownState, setDropdownState] = React.useState(false);
 
   function processWSData(): IDurationsByJobTaskId {
     const durationsByJobTaskId: IDurationsByJobTaskId = {};
@@ -63,7 +65,7 @@ function App() {
     const lineDataset = {
       label: 'Total',
       data: uniqueHours.map( (hour: any) => Object.values(wsData).reduce( (total,hourData) => total + (hourData[hour] ?? 0),0)),
-      backgroundColor: 'transparent',
+      backgroundColor: 'blue',
       borderColor: 'blue',
       type: 'line',
       fill: false
@@ -83,6 +85,29 @@ function App() {
       }
       setdisplayDatasets(!displayDatasets);
     });
+    
+  }
+
+  function toggleDropdown() {
+    setDropdownState((prevState) => !prevState);
+  }
+
+  function toggleDataset(index: number, item: any) {
+    const meta = chartInstanceRef.current?.getDatasetMeta(index);
+    if (meta) {
+      meta.hidden = !meta.hidden;
+      chartInstanceRef.current?.update();
+
+      setLegendItems(prevLegendItems => {
+        const updatedItems = prevLegendItems.map((item, i) => {
+          if (i === index) {
+            return {...item,hidden: meta.hidden};
+          }
+          return item;
+        });
+        return updatedItems;
+      });
+    }
     
   }
 
@@ -113,10 +138,9 @@ function App() {
             stacked: true,
           },
         },
-        animation: false,
         plugins: {
           legend: {
-            position: 'right'
+            display: false
           },
           datalabels: {
             color: 'White',
@@ -141,13 +165,34 @@ function App() {
       }
       Chart.register(LineController, LineElement, ChartDataLabels);
       chartInstanceRef.current = new Chart(ctx, chartConfig);
+      if(chartInstanceRef.current.legend && chartInstanceRef.current.legend.legendItems) {
+        setLegendItems(chartInstanceRef.current.legend.legendItems);
+      } else {
+        setLegendItems([]);
+      }
     }
   }, [])
 
   return (
     <div className="App">
+      <div className="menu-container">
+        <div className={`dropdown-menu${dropdownState ? ' active' : ''}`}>
+          <div className="dropdown-menu-button" onClick={toggleDropdown}>
+            Tasks
+          </div>
+          <div className="dropdown-menu-content">
+            {legendItems.map((legendItem: any, i: number) => (
+              <div key={i} className={`legend-item${legendItem.hidden ? ' legend-item-hidden' : ''}`}  onClick={() => toggleDataset(i, legendItem)}>
+                <span className="legend-marker" style={{ backgroundColor: legendItem.fillStyle }}></span>
+                <span className="legend-text">{legendItem.text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="dropdown-menu-button" onClick={hideShowAll} >{displayDatasets ? 'Hide Datasets' : 'Show Datasets'}  </div>
+      </div>
       <canvas ref={chartRef}></canvas>
-      <input type="button" onClick={hideShowAll} value={displayDatasets ? 'Hide Datasets' : 'Show Datasets'}/>
+      
     </div>
   );
 }
