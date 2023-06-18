@@ -27,6 +27,8 @@
   min-width: 350px;
   box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
   z-index: 1;
+  max-height: 90vh;
+  overflow: auto;
 }
 
 .dropdown-menu.active .dropdown-menu-content {
